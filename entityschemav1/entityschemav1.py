@@ -735,6 +735,7 @@ class EntityType(str, Enum):
     GENERAL_WEAKNESS = "general_weakness"
     MUSCLE_WASTING = "muscle_wasting"
     HYPOTHERMIA = "hypothermia"
+    WARM_WELL_PERFUSED = "warm_well_perfused"
     PERIARREST_STATE = "periarrest_state"
 
     # INJURY / POISONING
