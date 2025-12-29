@@ -874,9 +874,13 @@ class EntityStatus(str, Enum):
     # Resolved chronic conditions that are no longer actively managed
     # Use for: "previous T2DM now off treatment", "cancer in remission" etc.
 
+    FAMILY = "family"
+    # Status refers to a family member
+    # Use for: family history, children history in mother's notes
+
     OTHER = "other"
     # Status unclear or doesn't fit above.
-    # Use for: family history, scientific hypothetical discussions.
+    # Use for: scientific hypothetical discussions, where unclear
     # Use this also as a release valve where context is ambiguous
 
 
