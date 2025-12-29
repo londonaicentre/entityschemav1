@@ -167,6 +167,7 @@ class EntityType(str, Enum):
     TYPE_1_DIABETES_MELLITUS = "type_1_diabetes_mellitus"
     TYPE_2_DIABETES_MELLITUS = "type_2_diabetes_mellitus"
     DIABETIC_KETOACIDOSIS = "diabetic_ketoacidosis"
+    HYPERGLYCAEMIA = "hyperglycaemia"
     HYPEROSMOLAR_HYPERGLYCAEMIC_STATE = "hyperosmolar_hyperglycaemic_state"
     DIABETIC_NEPHROPATHY = "diabetic_nephropathy"
     DIABETIC_RETINOPATHY = "diabetic_retinopathy"
@@ -603,6 +604,8 @@ class EntityType(str, Enum):
     ENDOMETRIOSIS = "endometriosis"
     FIBROIDS = "fibroids"
     OVARIAN_TORSION = "ovarian_torsion"
+    DYSMENORRHOEA = "dysmenorrhoea"
+    MENORRHAGIA = "menorrhagia"
 
     # PERINATAL
     PREGNANT = "pregnant"
@@ -798,6 +801,7 @@ class EntityType(str, Enum):
     CONTINUOUS_POSITIVE_AIRWAY_PRESSURE = "continuous_positive_airway_pressure"
     INVASIVE_VENTILATION = "invasive_ventilation"
     PEG_OR_PEJ_IN_SITU = "peg_or_pej_in_situ"
+    BLOOD_TRANSFUSION = "blood_transfusion"
     TRANSPLANTED_KIDNEY = "transplanted_kidney"
     TRANSPLANTED_LIVER = "transplanted_liver"
     TRANSPLANTED_HEART = "transplanted_heart"
@@ -842,10 +846,12 @@ class EntityType(str, Enum):
     MAJOR_ORTHOPAEDIC_SURGERY = "major_orthopaedic_surgery"
     MAJOR_UROLOGIC_SURGERY = "major_urologic_surgery"
     MAJOR_GYNAECOLOGIC_SURGERY = "major_gynaecologic_surgery"
+    SURGICAL_OR_PROCEDURAL_COMPLICATION = "surgical_or_procedural_complication"
 
     # SOCIAL
     SOCIAL_CARE_PACKAGE = "social_care_package"
     RESIDENTIAL_OR_CARE_HOME = "residential_or_care_home"
+    TEMPORARY_ACCOMODATION = "temporary_accomodation"
     NO_FIXED_ABODE = "no_fixed_abode"
     LIVING_ALONE_AT_HOME = "living_alone_at_home"
     LIVING_WITH_OTHERS_AT_HOME = "living_with_others_at_home"
@@ -877,8 +883,8 @@ class EntityStatus(str, Enum):
     # Use for: "no chest pain", "biopsy negative", "patient denies fever" etc
 
     HYPOTHETICAL = "hypothetical"
-    # Possible but unconfirmed.
-    # Use for: differential diagnoses, "?PE", "consider", "cannot exclude", "query" etc
+    # Possible but unconfirmed diagnosis, or procedures planned for future date
+    # Use for: differential diagnoses, "?PE", "consider", "cannot exclude", "query", etc also future procedures
 
     HISTORICAL_EVENT = "historical_event"
     # Past occurrence of an acute event or procedure

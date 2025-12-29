@@ -32,7 +32,7 @@ Do NOT extract 'close but not quite' entities that are not explicitly stated:
 **Entity Status**
 - `current`: Active/ongoing (default for present conditions)
 - `negated`: Explicitly denied/ruled out ("no", "denies", "excluded")
-- `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude")
+- `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude") or future procedure
 - `historical_event`: Past discrete acute event or procedure ("previous MI", "CVA 2019")
 - `resolved_condition`: Past chronic condition no longer active ("T2DM now resolved")
 - `family`: Entity doesn't belong to patient. Family history, or where child's history is in parent's notes
