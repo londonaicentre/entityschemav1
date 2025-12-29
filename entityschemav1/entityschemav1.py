@@ -877,8 +877,8 @@ class EntityStatus(str, Enum):
     # Use for: "previous T2DM now off treatment", "cancer in remission" etc.
 
     FAMILY = "family"
-    # Status refers to a family member
-    # Use for: family history, children history in mother's notes
+    # Entity is in reference to a family member, not the patient
+    # Use for: family history, child assessment recorded in mother's notes
 
     OTHER = "other"
     # Status unclear or doesn't fit above.
@@ -943,5 +943,5 @@ class EntitySchemaModel(BaseModel):
     context_summary: Optional[ContextSummary] = None
     extraction_notes: Optional[str] = Field(
     None,
-    description="Brief notes on extraction difficulties, ambiguities, or edge cases encountered"
+    description="Justification of difficult extraction choices, as well as notes on extraction difficulties, ambiguities, or edge cases encountered."
 )

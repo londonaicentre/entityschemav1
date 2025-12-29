@@ -23,9 +23,9 @@ Extract all valid entities for detected clinical concepts:
 - "fatty liver in alcoholic" → `fatty_liver` + `alcoholic_fatty_liver` + `alcoholic_liver_disease`
 - "Felt dizzy and faint followed quickly by collapse" -> `dizziness` + `presyncope` + `syncope_or_any_collapse`
 Do NOT extract 'close but not quite' entities:
-- "Liver US showed steatosis" does NOT match 'non_alcoholic_steatohepatitis'
-- "Necrotising Ear Infection" does NOT match 'otitis_media'
-- "umbilical granuloma" does NOT match `umbilical_hernia`
+- "Liver US showed steatosis" does NOT match 'non_alcoholic_steatohepatitis' (very different severities)
+- "Necrotising Ear Infection" does NOT match 'otitis_media' (do not make new diagnoses)
+- "umbilical granuloma" does NOT match `umbilical_hernia` (not the same diagnosis)
 
 **Entity Status**
 - `current`: Active/ongoing (default for present conditions)
@@ -33,7 +33,7 @@ Do NOT extract 'close but not quite' entities:
 - `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude")
 - `historical_event`: Past discrete acute event or procedure ("previous MI", "CVA 2019")
 - `resolved_condition`: Past chronic condition no longer active ("T2DM now resolved")
-- `family`: Family history or where child's history is in parent's notes
+- `family`: Entity doesn't belong to patient. Family history, or where child's history is in parent's notes
 - `other`: Ambiguous, or doesn't fit above
 
 **Boolean Flags**
@@ -56,50 +56,22 @@ Do NOT extract 'close but not quite' entities:
 
 <example>
 <input>
-"68F admitted with new diagnosis metastatic breast cancer, rapidly progressing, liver mets on CT. Chemotherapy planned. PMH: HTN (off treatment x2yrs), AF on warfarin, previous TIA 2018, CABG 2015. Obs: tachy at 112, BP 132/75. ?PE given severe pleuritic pain and tachycardia — CTPA ordered. Pleuritic pain has gotten worse in past day. Denies haemoptysis. Social: lives alone, uses zimmer frame, ex-smoker."
+"72M admitted with acute confusion, pyrexia 38.9°C. Known CKD4 secondary to T2DM, kidney transplant 2019 functioning well. PMH: CVA 2017 with residual L hemiplegia, ?TIA last week awaiting MRI, childhood epilepsy (resolved), CABG 2015. FHx: mother bowel Ca age 58. BP 92/58. Chest clear, no wheeze. CXR: bilateral infiltrates. Lactate 4.2. Urine dip+. Impression: urosepsis, ?AKI on CKD. No chest pain, ECG non-ischaemic. Lives with wife, mobile with stick, smoker 20/day."
 </input>
 
 <output>
 {
   "is_clinical_document": true,
-  "has_active_malignancy": true,
+  "has_active_malignancy": false,
   "entities": [
     {
-      "entity": "primary_cancer_breast",
-      "entity_name_source_text": "metastatic breast cancer",
+      "entity": "confusion_or_disorientation",
+      "entity_name_source_text": "acute confusion",
       "entity_status": "current",
-      "entity_status_source_text": "new diagnosis",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": "rapidly progressing",
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": true
-    },
-    {
-      "entity": "cancer_metastases",
-      "entity_name_source_text": "liver mets",
-      "entity_status": "current",
-      "entity_status_source_text": "liver mets on CT",
+      "entity_status_source_text": "admitted with",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": true
-    },
-    {
-      "entity": "essential_hypertension",
-      "entity_name_source_text": "HTN",
-      "entity_status": "resolved_condition",
-      "entity_status_source_text": "off treatment x2yrs",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
       "is_comorbidity": false,
       "is_procedure": false,
       "diagnosis_or_occurrence_year": null,
@@ -107,10 +79,108 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "atrial_fibrillation",
-      "entity_name_source_text": "AF",
+      "entity": "pyrexia",
+      "entity_name_source_text": "pyrexia 38.9°C",
       "entity_status": "current",
-      "entity_status_source_text": "AF on warfarin",
+      "entity_status_source_text": null,
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": true,
+      "is_comorbidity": false,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "chronic_kidney_disease",
+      "entity_name_source_text": "CKD4",
+      "entity_status": "current",
+      "entity_status_source_text": "Known",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": true,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "ckd_stage_4",
+      "entity_name_source_text": "CKD4",
+      "entity_status": "current",
+      "entity_status_source_text": "Known",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": true,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "diabetic_nephropathy",
+      "entity_name_source_text": "CKD4 secondary to T2DM",
+      "entity_status": "current",
+      "entity_status_source_text": null,
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": true,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "type_2_diabetes_mellitus",
+      "entity_name_source_text": "T2DM",
+      "entity_status": "current",
+      "entity_status_source_text": null,
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": true,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "transplanted_kidney",
+      "entity_name_source_text": "kidney transplant 2019",
+      "entity_status": "current",
+      "entity_status_source_text": "functioning well",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": true,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": 2019,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "ischaemic_stroke",
+      "entity_name_source_text": "CVA 2017",
+      "entity_status": "historical_event",
+      "entity_status_source_text": "PMH",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": false,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": 2017,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "hemiplegia",
+      "entity_name_source_text": "residual L hemiplegia",
+      "entity_status": "current",
+      "entity_status_source_text": "residual",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
@@ -122,23 +192,37 @@ Do NOT extract 'close but not quite' entities:
     },
     {
       "entity": "transient_ischaemic_attack",
-      "entity_name_source_text": "TIA",
-      "entity_status": "historical_event",
-      "entity_status_source_text": "previous TIA 2018",
+      "entity_name_source_text": "TIA last week",
+      "entity_status": "hypothetical",
+      "entity_status_source_text": "?TIA",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": true,
+      "is_comorbidity": false,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "epilepsy",
+      "entity_name_source_text": "childhood epilepsy",
+      "entity_status": "resolved_condition",
+      "entity_status_source_text": "resolved",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
       "is_comorbidity": false,
       "is_procedure": false,
-      "diagnosis_or_occurrence_year": 2018,
+      "diagnosis_or_occurrence_year": null,
       "diagnosis_or_occurrence_month": null,
       "is_new_diagnosis": false
     },
     {
       "entity": "coronary_artery_bypass_graft",
-      "entity_name_source_text": "CABG",
+      "entity_name_source_text": "CABG 2015",
       "entity_status": "historical_event",
-      "entity_status_source_text": "CABG 2015",
+      "entity_status_source_text": "PMH",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
@@ -149,10 +233,24 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "tachycardia",
-      "entity_name_source_text": "tachy at 112",
+      "entity": "primary_cancer_colorectal",
+      "entity_name_source_text": "bowel Ca",
+      "entity_status": "family",
+      "entity_status_source_text": "FHx: mother",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": false,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
+      "entity": "hypotension",
+      "entity_name_source_text": "BP 92/58",
       "entity_status": "current",
-      "entity_status_source_text": "Obs: tachy at 112",
+      "entity_status_source_text": null,
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": true,
@@ -163,10 +261,24 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "pulmonary_embolism",
-      "entity_name_source_text": "PE",
+      "entity": "urosepsis",
+      "entity_name_source_text": "urosepsis",
+      "entity_status": "current",
+      "entity_status_source_text": "Impression",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": true,
+      "is_comorbidity": false,
+      "is_procedure": false,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": true
+    },
+    {
+      "entity": "acute_kidney_injury",
+      "entity_name_source_text": "AKI on CKD",
       "entity_status": "hypothetical",
-      "entity_status_source_text": "?PE",
+      "entity_status_source_text": "?AKI",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": true,
@@ -177,24 +289,10 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "pleuritic_pain",
-      "entity_name_source_text": "pleuritic pain",
-      "entity_status": "current",
-      "entity_status_source_text": "given severe pleuritic pain",
-      "entity_severity_source_text": "severe",
-      "entity_progress_source_text": "gotten worse in past day",
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "haemoptysis",
-      "entity_name_source_text": "haemoptysis",
+      "entity": "chest_pain",
+      "entity_name_source_text": "chest pain",
       "entity_status": "negated",
-      "entity_status_source_text": "Denies haemoptysis",
+      "entity_status_source_text": "No chest pain",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
@@ -205,10 +303,10 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "living_alone_at_home",
-      "entity_name_source_text": "lives alone",
-      "entity_status": "current",
-      "entity_status_source_text": "lives alone",
+      "entity": "wheezing",
+      "entity_name_source_text": "wheeze",
+      "entity_status": "negated",
+      "entity_status_source_text": "no wheeze",
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
@@ -219,10 +317,10 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "zimmer_or_walker_dependency",
-      "entity_name_source_text": "uses zimmer frame",
+      "entity": "living_with_others_at_home",
+      "entity_name_source_text": "Lives with wife",
       "entity_status": "current",
-      "entity_status_source_text": "uses zimmer frame",
+      "entity_status_source_text": null,
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
@@ -233,10 +331,10 @@ Do NOT extract 'close but not quite' entities:
       "is_new_diagnosis": false
     },
     {
-      "entity": "ex_smoker",
-      "entity_name_source_text": "ex-smoker",
+      "entity": "active_smoker",
+      "entity_name_source_text": "smoker 20/day",
       "entity_status": "current",
-      "entity_status_source_text": "ex-smoker",
+      "entity_status_source_text": null,
       "entity_severity_source_text": null,
       "entity_progress_source_text": null,
       "is_key_problem": false,
@@ -248,16 +346,18 @@ Do NOT extract 'close but not quite' entities:
     }
   ],
   "context_summary": {
-    "doc_context": "Acute medical admission",
-    "doc_summary": "68F with new metastatic breast cancer (liver mets), admitted for workup. Acute concern for PE given pleuritic pain and tachycardia. PMH includes AF, previous TIA, CABG."
+    "doc_context": "Acute medical admission clerking",
+    "doc_summary": "72M with acute confusion and pyrexia, working diagnosis urosepsis with possible AKI on background CKD4 (diabetic nephropathy, post-transplant). Recent possible TIA under investigation. PMH includes CVA with residual hemiplegia, resolved childhood epilepsy, CABG."
   },
-  "extraction_notes": "BP 132/75 not extracted as hypertension as borderline and straying into inference which is forbidden."
+  "extraction_notes": "EXTRACTED via greedy matching: 'CKD4 secondary to T2DM' yields chronic_kidney_disease + ckd_stage_4 + diabetic_nephropathy + type_2_diabetes_mellitus (+ diabetes_mellitus). Urosepsis also yields sepsis + urinary_tract_infection. | STATUSES: CVA is historical_event (discrete past event) but hemiplegia is current (ongoing residual deficit). Transplant is current (in situ, functioning). Epilepsy is resolved_condition (explicitly stated resolved). ?TIA and ?AKI are hypothetical (unconfirmed). Bowel Ca is family (FHx). | NOT EXTRACTED: 'bilateral infiltrates' = radiological finding, not diagnosis (could be infection, oedema, or other). 'Lactate 4.2' = lab value, would need explicit 'lactic acidosis' to extract. 'ECG non-ischaemic' supports chest_pain negation but is not itself an entity. 'mobile with stick' ≠ zimmer_or_walker_dependency (walking stick is different mobility aid). 'acute confusion' → confusion_or_disorientation, NOT delirium (would need explicit delirium diagnosis)."
 }
 </output>
 </example>
 
 If document is non-clinical or not patient-specific, set `is_clinical_document: false` with null entities.
 
-CRITICAL: If uncertain about entity match or status, DO NOT EXTRACT. Never make or infer your own diagnosis. Never fabricate EntityType values. Only match where entities are a true fit, not where a match is 'close'. Precision is the most important thing.
+EDGE CASE: Look out for documents with mixed mother and baby history. Identify who the primary patient is, and mark status of the other as `family`.
+
+CRITICAL: If uncertain about entity match or status, DO NOT EXTRACT. Never make or infer your own diagnosis. Never fabricate EntityType values. Only match where entities are a true fit, not where a match is 'close'. Precision and truth are vital.
 
 The document follows below:
