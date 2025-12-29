@@ -305,6 +305,7 @@ class EntityType(str, Enum):
     PAPILLOEDEMA = "papilloedema"
     VISUAL_IMPAIRMENT_INCLUDING_BLINDNESS = "visual_impairment_including_blindness"
     OTITIS_MEDIA = "otitis_media"
+    OTITIS_EXTERNA = "otitis_externa"
     MASTOIDITIS = "mastoiditis"
     VESTIBULAR_DISORDERS = "vestibular_disorders"
     HEARING_LOSS = "hearing_loss"
@@ -460,6 +461,7 @@ class EntityType(str, Enum):
     PERITONITIS = "peritonitis"
     GILBERTS_SYNDROME = "gilberts_syndrome"
     FATTY_LIVER = "fatty_liver"
+    NON_ALCOHOLIC_FATTY_LIVER = "non_alcoholic_fatty_liver"
     ALCOHOLIC_FATTY_LIVER = "alcoholic_fatty_liver"
     ALCOHOLIC_LIVER_DISEASE = "alcoholic_liver_disease"
     ALCOHOLIC_HEPATITIS = "alcoholic_hepatitis"
@@ -868,7 +870,7 @@ class EntityStatus(str, Enum):
     HISTORICAL_EVENT = "historical_event"
     # Past occurrence of an acute event or procedure
     # Use for: "previous MI", "history of stroke", "CABG 2015" etc.
-    # Applies to discrete occurrences
+    # Applies to discrete occurrences.
 
     RESOLVED_CONDITION = "resolved_condition"
     # Resolved chronic conditions that are no longer actively managed

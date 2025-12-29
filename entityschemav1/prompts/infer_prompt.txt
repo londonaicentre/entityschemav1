@@ -30,7 +30,7 @@ Do NOT extract 'close but not quite' entities:
 - `current`: Active/ongoing (default for present conditions)
 - `negated`: Explicitly denied/ruled out ("no", "denies", "excluded")
 - `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude")
-- `historical_event`: Past discrete event ("previous MI", "CVA 2019")
+- `historical_event`: Past discrete acute event or procedure ("previous MI", "CVA 2019")
 - `resolved_condition`: Past chronic condition no longer active ("T2DM now resolved")
 - `family`: Family history or where child's history is in parent's notes
 - `other`: Ambiguous, or doesn't fit above
