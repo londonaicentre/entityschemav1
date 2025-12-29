@@ -603,6 +603,7 @@ class EntityType(str, Enum):
     OVARIAN_TORSION = "ovarian_torsion"
 
     # PERINATAL
+    PREGNANT = "pregnant"
     ECTOPIC_PREGNANCY = "ectopic_pregnancy"
     PREGNANCY_WITH_ABORTIVE_OUTCOME = "pregnancy_with_abortive_outcome"
     PREGNANCY_SUCCESSFUL_DELIVERY = "pregnancy_successful_delivery"
