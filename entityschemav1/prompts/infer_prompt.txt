@@ -32,7 +32,8 @@ Do NOT extract 'close but not quite' entities that are not explicitly stated:
 **Entity Status**
 - `current`: Active/ongoing (default for present conditions)
 - `negated`: Explicitly denied/ruled out ("no", "denies", "excluded")
-- `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude") or future procedure
+- `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude")
+- `planned_procedure`: Procedure scheduled or planned for future ("plan for endoscopy", "listed for CABG")
 - `historical_event`: Past discrete acute event or procedure ("previous MI", "CVA 2019")
 - `resolved_condition`: Past chronic condition no longer active ("T2DM now resolved")
 - `family`: Entity doesn't belong to patient. Family history, or where child's history is in parent's notes
@@ -58,14 +59,14 @@ Do NOT extract 'close but not quite' entities that are not explicitly stated:
 
 <example>
 <input>
-"72M admitted with acute confusion, pyrexia 38.9°C. Known CKD4 secondary to T2DM, kidney transplant 2019 functioning well. PMH: CVA 2017 with residual L hemiplegia, ?TIA last week awaiting MRI, childhood epilepsy (resolved), CABG 2015. Codeine and lactulose. On amlodipine. FHx: mother bowel Ca age 58. BP 92/58. Chest clear, no wheeze. CXR: bilateral infiltrates. Lactate 4.2. Urine dip+. Impression: urosepsis, ?AKI on CKD. No chest pain, ECG non-ischaemic. Lives with wife, mobile with stick, smoker 20/day."
+"72M admitted with acute confusion, pyrexia 38.9°C. Known CKD4 secondary to T2DM, kidney transplant 2019 functioning well. PMH: CVA 2017 with residual L hemiplegia, ?TIA last week awaiting MRI, childhood epilepsy (resolved), CABG 2015. Codeine and lactulose. On amlodipine. FHx: mother bowel Ca age 58. BP 92/58. Chest clear, no wheeze. CXR: bilateral infiltrates. Lactate 4.2. Urine dip+. Impression: urosepsis, ?AKI on CKD. Plan: OGD next week for ongoing epigastric discomfort. No chest pain, ECG non-ischaemic. Lives with wife, mobile with stick, smoker 20/day."
 </input>
 
 <output>
 {
   "is_clinical_document": true,
   "has_active_malignancy": false,
-  "extraction_notes": "EXTRACTED: 'CKD4 secondary to T2DM' yields chronic_kidney_disease + ckd_stage_4 + diabetic_nephropathy + type_2_diabetes_mellitus (+ diabetes_mellitus). Urosepsis also yields sepsis + urinary_tract_infection. | STATUSES: CVA is historical_event (discrete past event) but hemiplegia is current (ongoing residual deficit). Transplant is current (in situ, functioning). Epilepsy is resolved_condition (explicitly stated resolved). ?TIA and ?AKI are hypothetical (unconfirmed). Bowel Ca is family (FHx). | NOT EXTRACTED: 'bilateral infiltrates' = radiological finding, not diagnosis (could be infection, oedema, or other). 'Lactate 4.2' = lab value, would need explicit 'lactic acidosis' to extract. BP 92/58 implies hypotension, but is not explicit and should not be inferred from result. 'ECG non-ischaemic' supports chest_pain negation but is not itself an entity. 'mobile with stick' ≠ zimmer_or_walker_dependency (walking stick is different mobility aid). 'acute confusion' → confusion_or_disorientation, NOT delirium (would need explicit delirium diagnosis). Lactulose implies constipation, but not explicitly stated so not extracted. Amlodipine implies hypertension, but it is incorrect to infer this diagnosis",
+  "extraction_notes": "EXTRACTED: 'CKD4 secondary to T2DM' yields chronic_kidney_disease + ckd_stage_4 + diabetic_nephropathy + type_2_diabetes_mellitus (+ diabetes_mellitus). Urosepsis also yields sepsis + urinary_tract_infection. | STATUSES: CVA is historical_event (discrete past event) but hemiplegia is current (ongoing residual deficit). Transplant is current (in situ, functioning). Epilepsy is resolved_condition (explicitly stated resolved). ?TIA and ?AKI are hypothetical (unconfirmed). OGD is planned_procedure (scheduled for future). Bowel Ca is family (FHx). | NOT EXTRACTED: 'bilateral infiltrates' = radiological finding, not diagnosis (could be infection, oedema, or other). 'Lactate 4.2' = lab value, would need explicit 'lactic acidosis' to extract. BP 92/58 implies hypotension, but is not explicit and should not be inferred from result. 'ECG non-ischaemic' supports chest_pain negation but is not itself an entity. 'mobile with stick' ≠ zimmer_or_walker_dependency (walking stick is different mobility aid). 'acute confusion' → confusion_or_disorientation, NOT delirium (would need explicit delirium diagnosis). Lactulose implies constipation, but not explicitly stated so not extracted. Amlodipine implies hypertension, but it is incorrect to infer this diagnosis. 'epigastric discomfort' not extracted as no exact entity match",
   "entities": [
     {
       "entity": "confusion_or_disorientation",
@@ -278,6 +279,20 @@ Do NOT extract 'close but not quite' entities that are not explicitly stated:
       "is_new_diagnosis": false
     },
     {
+      "entity": "upper_gi_endoscopic_therapy",
+      "entity_name_source_text": "OGD next week",
+      "entity_status": "planned_procedure",
+      "entity_status_source_text": "Plan: OGD next week",
+      "entity_severity_source_text": null,
+      "entity_progress_source_text": null,
+      "is_key_problem": false,
+      "is_comorbidity": false,
+      "is_procedure": true,
+      "diagnosis_or_occurrence_year": null,
+      "diagnosis_or_occurrence_month": null,
+      "is_new_diagnosis": false
+    },
+    {
       "entity": "chest_pain",
       "entity_name_source_text": "chest pain",
       "entity_status": "negated",
@@ -336,7 +351,7 @@ Do NOT extract 'close but not quite' entities that are not explicitly stated:
   ],
   "context_summary": {
     "doc_context": "Acute medical admission clerking",
-    "doc_summary": "72M with acute confusion and pyrexia, working diagnosis urosepsis with possible AKI on background CKD4 (diabetic nephropathy, post-transplant). Recent possible TIA under investigation. PMH includes CVA with residual hemiplegia, resolved childhood epilepsy, CABG."
+    "doc_summary": "72M with acute confusion and pyrexia, working diagnosis urosepsis with possible AKI on background CKD4 (diabetic nephropathy, post-transplant). OGD planned for ongoing epigastric discomfort. Recent possible TIA under investigation. PMH includes CVA with residual hemiplegia, resolved childhood epilepsy, CABG."
   }
 }
 </output>

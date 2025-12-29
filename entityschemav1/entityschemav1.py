@@ -28,6 +28,7 @@ class EntityType(str, Enum):
     BRAIN_ABSCESS = "brain_abscess"
     SPINAL_ABSCESS = "spinal_abscess"
     LIVER_ABSCESS = "liver_abscess"
+    PERIANAL_ABSCESS = "perianal_abscess"
     DISCITIS = "discitis"
     OSTEOMYELITIS = "osteomyelitis"
     SEPSIS = "sepsis"
@@ -118,6 +119,8 @@ class EntityType(str, Enum):
     CANCER_METASTASES = "cancer_metastases"
     BENIGN_NEOPLASM = "benign_neoplasm"
     EARLY_STAGE_NEOPLASM_IN_SITU = "early_stage_neoplasm_in_situ"
+    CHEMOTHERAPY = "chemotherapy"
+    RADIOTHERAPY = "radiotherapy"
 
     # HAEMATOLOGICAL
     ANAEMIA = "anaemia"
@@ -225,6 +228,7 @@ class EntityType(str, Enum):
     MANIC_EPISODE = "manic_episode"
     BIPOLAR_AFFECTIVE_DISORDER = "bipolar_affective_disorder"
     DEPRESSION = "depression"
+    LOW_MOOD = "low_mood"
     SUICIDAL_IDEATION = "suicidal_ideation"
     ANXIETY_DISORDER = "anxiety_disorder"
     POST_TRAUMATIC_STRESS_DISORDER = "post_traumatic_stress_disorder"
@@ -233,6 +237,7 @@ class EntityType(str, Enum):
     BULIMIA_NERVOSA = "bulimia_nervosa"
     PERSONALITY_DISORDER = "personality_disorder"
     LEARNING_DISABILITY = "learning_disability"
+    INSOMNIA = "insomnia"
 
     # NEUROLOGY
     DEMENTIA = "dementia"
@@ -313,6 +318,9 @@ class EntityType(str, Enum):
     VESTIBULAR_DISORDERS = "vestibular_disorders"
     HEARING_LOSS = "hearing_loss"
     MACULAR_DEGENERATION = "macular_degeneration"
+
+    # DENTAL
+    DENTAL_CONDITION = "dental_condition"
 
     # CARDIOVASCULAR
     RHEUMATIC_FEVER = "rheumatic_fever"
@@ -424,6 +432,8 @@ class EntityType(str, Enum):
     INTERSTITIAL_LUNG_DISEASE = "interstitial_lung_disease"
     PNEUMOTHORAX = "pneumothorax"
     TENSION_PNEUMOTHORAX = "tension_pneumothorax"
+    SURGICAL_EMPHYSEMA = "surgical_emphysema"
+    BRONCHOPLEURAL_FISTULA = "bronchopleural_fistula"
     PLEURAL_EFFUSION = "pleural_effusion"
     HAEMOTHORAX = "haemothorax"
     EMPYEMA = "empyema"
@@ -448,6 +458,7 @@ class EntityType(str, Enum):
     HAEMATEMESIS = "haematemesis"
     MELAENA = "melaena"
     LOWER_GI_BLEED = "lower_gi_bleed"
+    RECTAL_BLEEDING = "rectal_bleeding"
     ACUTE_APPENDICITIS = "acute_appendicitis"
     INGUINAL_OR_FEMORAL_HERNIA = "inguinal_or_femoral_hernia"
     UMBILICAL_HERNIA = "umbilical_hernia"
@@ -455,14 +466,19 @@ class EntityType(str, Enum):
     CROHNS_DISEASE = "crohns_disease"
     ULCERATIVE_COLITIS = "ulcerative_colitis"
     COLITIS = "colitis"
+    PROCTITIS = "proctitis"
     VOLVULUS = "volvulus"
     INTESTINAL_OBSTRUCTION = "intestinal_obstruction"
     ILEUS = "ileus"
     ACUTE_DIVERTICULITIS = "acute_diverticulitis"
+    DIVERTICULAR_DISEASE = "diverticular_disease"
     IRRITABLE_BOWEL_SYNDROME = "irritable_bowel_syndrome"
     MEGACOLON = "megacolon"
     BOWEL_PERFORATION = "bowel_perforation"
     PERITONITIS = "peritonitis"
+    HAEMORRHOIDS = "haemorrhoids"
+    ANAL_FISSURE = "anal_fissure"
+    RECTAL_PROLAPSE = "rectal_prolapse"
     GILBERTS_SYNDROME = "gilberts_syndrome"
     FATTY_LIVER = "fatty_liver"
     NON_ALCOHOLIC_FATTY_LIVER = "non_alcoholic_fatty_liver"
@@ -606,6 +622,7 @@ class EntityType(str, Enum):
     OVARIAN_TORSION = "ovarian_torsion"
     DYSMENORRHOEA = "dysmenorrhoea"
     MENORRHAGIA = "menorrhagia"
+    UTERINE_PROLAPSE = "uterine_prolapse"
 
     # PERINATAL
     PREGNANT = "pregnant"
@@ -795,12 +812,14 @@ class EntityType(str, Enum):
     # OTHER / SPECIALIST
     TRACHEOSTOMY_IN_SITU = "tracheostomy_in_situ"
     TRACHEOSTOMY_MALFUNCTION = "tracheostomy_malfunction"
+    CVC_OR_PICC_LINE_IN_SITU = "cvc_or_picc_line_in_situ"
     OXYGEN_THERAPY = "oxygen_therapy"
     HIGH_FLOW_OXYGEN_THERAPY = "high_flow_oxygen_therapy"
     BI_LEVEL_POSITIVE_PRESSURE_VENTILATION = "bi_level_positive_pressure_ventilation"
     CONTINUOUS_POSITIVE_AIRWAY_PRESSURE = "continuous_positive_airway_pressure"
     INVASIVE_VENTILATION = "invasive_ventilation"
     PEG_OR_PEJ_IN_SITU = "peg_or_pej_in_situ"
+    STOMA_IN_SITU = "stoma_in_situ"
     BLOOD_TRANSFUSION = "blood_transfusion"
     TRANSPLANTED_KIDNEY = "transplanted_kidney"
     TRANSPLANTED_LIVER = "transplanted_liver"
@@ -883,13 +902,17 @@ class EntityStatus(str, Enum):
     # Use for: "no chest pain", "biopsy negative", "patient denies fever" etc
 
     HYPOTHETICAL = "hypothetical"
-    # Possible but unconfirmed diagnosis, or procedures planned for future date
-    # Use for: differential diagnoses, "?PE", "consider", "cannot exclude", "query", etc also future procedures
+    # Possible but unconfirmed diagnosis
+    # Use for: differential diagnoses, "?PE", "consider", "cannot exclude", "query", etc
 
     HISTORICAL_EVENT = "historical_event"
     # Past occurrence of an acute event or procedure
     # Use for: "previous MI", "history of stroke", "CABG 2015" etc.
     # Applies to discrete occurrences.
+
+    PLANNED_PROCEDURE = "planned_procedure"
+    # Procedure scheduled or planned for future
+    # Use for: "plan for endoscopy", "listed for CABG", etc
 
     RESOLVED_CONDITION = "resolved_condition"
     # Resolved chronic conditions that are no longer actively managed
