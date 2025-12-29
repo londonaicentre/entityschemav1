@@ -327,6 +327,7 @@ class EntityType(str, Enum):
     NON_ST_ELEVATION_MYOCARDIAL_INFARCTION = "non_st_elevation_myocardial_infarction"
     ST_ELEVATION_MYOCARDIAL_INFARCTION = "st_elevation_myocardial_infarction"
     CHRONIC_ISCHAEMIC_HEART_DISEASE = "chronic_ischaemic_heart_disease"
+    CORONARY_ARTERY_STENT_IN_SITU = "coronary_artery_stent_in_situ"
     DRESSLERS_SYNDROME = "dresslers_syndrome"
     ANEURYSM_OF_HEART = "aneurysm_of_heart"
     PULMONARY_EMBOLISM = "pulmonary_embolism"
@@ -813,11 +814,17 @@ class EntityType(str, Enum):
     EMERGENCY_LAPAROTOMY = "emergency_laparotomy"
     MAJOR_OPEN_SURGERY = "major_open_surgery"
     MINIMALLY_INVASIVE_SURGERY = "minimally_invasive_surgery"
-    ENDOSCOPIC_THERAPY = "endoscopic_therapy"
-    PERCUTANEOUS_INTERVENTION = "percutaneous_intervention"
+    UPPER_GI_ENDOSCOPIC_THERAPY = "upper_gi_endoscopic_therapy"
+    LOWER_GI_ENDOSCOPIC_THERAPY = "lower_gi_endoscopic_therapy"
+    URETOSCOPIC_OR_CYSTOSCOPIC_THERAPY = "uretoscopic_or_cystoscopic_therapy"
+    BRONCHOSCOPIC_THERAPY = "bronchoscopic_therapy"
+    PERCUTANEOUS_DRAIN = "percutaneous_drain"
+    VASCULAR_INTERVENTIONAL_PROCEDURE = "vascular_interventional_procedure"
     ORGAN_TRANSPLANTATION = "organ_transplantation"
     CORONARY_ARTERY_BYPASS_GRAFT = "coronary_artery_bypass_graft"
-    CORONARY_ARTERY_STENT = "coronary_artery_stent"
+    PERCUTANEOUS_CORONARY_INTERVENTION = "percutaneous_coronary_intervention"
+    CARDIAC_ELECTROPHYSIOLOGY_PROCEDURE = "cardiac_electrophysiology_procedure"
+    TRANSCATHETER_VALVE_PROCEDURE = "transcatheter_valve_procedure"
     CANCER_TUMOUR_RESECTION_OR_DEBULKING = "cancer_tumour_resection_or_debulking"
     MAJOR_UPPER_GI_SURGERY = "major_upper_gi_surgery"
     MAJOR_LOWER_GI_SURGERY = "major_lower_gi_surgery"
@@ -939,9 +946,9 @@ class EntitySchemaModel(BaseModel):
     has_active_malignancy: bool = Field(
         description="TRUE if patient has active cancer documented"
     )
-    entities: Optional[List[Entity]] = None
-    context_summary: Optional[ContextSummary] = None
     extraction_notes: Optional[str] = Field(
     None,
     description="Justification of difficult extraction choices, as well as notes on extraction difficulties, ambiguities, or edge cases encountered."
-)
+    )
+    entities: Optional[List[Entity]] = None
+    context_summary: Optional[ContextSummary] = None
