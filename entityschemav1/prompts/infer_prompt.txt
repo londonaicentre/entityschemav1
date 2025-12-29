@@ -24,7 +24,8 @@ Extract all valid entities for detected clinical concepts:
 - "Felt dizzy and faint followed quickly by collapse" -> `dizziness` + `presyncope` + `syncope_or_any_collapse`
 Do NOT extract 'close but not quite' entities:
 - "Liver US showed steatosis" does NOT match 'non_alcoholic_steatohepatitis'
-- "Necrotising Otitis Externa" does NOT match 'otitis_media'
+- "Necrotising Ear Infection" does NOT match 'otitis_media'
+- "umbilical granuloma" does NOT match `umbilical_hernia`
 
 **Entity Status**
 - `current`: Active/ongoing (default for present conditions)
@@ -257,6 +258,6 @@ Do NOT extract 'close but not quite' entities:
 
 If document is non-clinical or not patient-specific, set `is_clinical_document: false` with null entities.
 
-CRITICAL: If uncertain about entity match or status, DO NOT EXTRACT. Never make or infer your own diagnosis. Never fabricate EntityType values. Only match where entities are true, not where a match is just 'close'.
+CRITICAL: If uncertain about entity match or status, DO NOT EXTRACT. Never make or infer your own diagnosis. Never fabricate EntityType values. Only match where entities are a true fit, not where a match is 'close'. Precision is the most important thing.
 
 The document follows below:
