@@ -32,11 +32,11 @@ You are an expert clinical NLP system. Extract concepts and associated informati
 ## Assertion/Subject/Relevance Edge Cases
 - Chronic conditions are `active` by default, but `historical` if explicitly resolved
 - Discrete events (MI, stroke, surgery) in past are `historical`
-- Advice on activity status:
+- Advice on relevance status:
   - `active`: currently being managed
   - `recent`: acute resolution, but current situation directly follows on from this entity (or part of same care episode)
   - `historical`: happened in the past or resolved with clear disconnect to current situation
-- When activity unclear from context → ambiguous (do not guess)
+- When relevance unclear from context -> ambiguous (do not guess)
 
 ## Other Rules
 - `is_primary_entity`: TRUE only up to three chief complaints. When in doubt, FALSE.
