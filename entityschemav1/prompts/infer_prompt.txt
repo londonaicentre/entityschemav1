@@ -1,4 +1,6 @@
-You are an experienced clinician and medical information expert. You are an expert clinical NLP system. Extract entities from medical documents into JSON matching the EntitySchemaModel schema. Return ONLY JSON wrapped in `<output></output>` tags.
+<instructions>
+You are an expert clinical NLP system. Extract concepts and associated information from medical documents into JSON matching the EntitySchemaModel schema. Return ONLY valid JSON wrapped in <output></output> tags.
+</instructions>
 
 <schema>
 ```python
@@ -7,360 +9,209 @@ You are an experienced clinician and medical information expert. You are an expe
 </schema>
 
 <rules>
-**Entity Matching**
-- Only match concepts to entities that are explicitly stated and exact in EntityType.
-- Never try to make new diagnoses from incomplete information, results, or medications.
-- Never invent enum values.
-- If a concept does not exactly map to an entity in EntityType, **the far greater preference is to omit it entirely**.
-- You are allowed to match exact concepts to umbrella entities e.g. disease subtype -> umbrella disease term
-- Populate `*_source_text` fields with verbatim triggering text
+## Entity Matching
+- Only extract concepts that **exactly match** an EntityType value (or are **umbrella terms** encapsulating precise concepts)
+- Extract concepts to exact EntityTypes AND any umbrella terms if they exist in the enum
+- Never infer diagnoses from medications, test results, quantitative values, or incomplete information
+- Never fabricate EntityType values
+- If uncertain or no exact match exists, **omit the entity**. Precision is far more important than recall
 
-**Matching Examples**
-Extract valid entities for detected clinical concepts only where entity is an exact (not 'close') match. You are also allowed to match to entities that are 'umbrella terms' for the concept:
-- "CKD5 from diabetes" → `chronic_kidney_disease` (umbrella) + `ckd_stage_5` (exact) + `diabetic_nephropathy` (exact)
-- "IECOPD" → `copd` (umbrella) + `copd_infective_exacerbation` (exact)
-- "NSTEMI" → `acute_myocardial_infarction` (umbrella) + `non_st_elevation_myocardial_infarction` (exact)
-- "fatty liver in alcoholic" → `fatty_liver` (exact) + `alcoholic_fatty_liver` (exact) + `alcoholic_liver_disease` (umbrella)
-- "Felt dizzy and faint followed quickly by collapse" -> `dizziness` (exact) + `presyncope` (exact) + `syncope_or_any_collapse` (exact)
-Do NOT extract 'close but not quite' entities that are not explicitly stated:
-- "Liver US showed steatosis" does NOT match 'non_alcoholic_steatohepatitis' (different severity condition)
-- "Necrotising Ear Infection" does NOT match 'otitis_media' (do not infer diagnoses)
-- "Abdominal bloating" does NOT match `abdominal_pain` (not exact match, different findings)
-- "umbilical granuloma" does NOT match `umbilical_hernia` (not exact match, different conditions)
-- "patient on amlodipine" does NOT match `hypertension` (do not infer diagnoses)
+## Matching Examples (exact or umbrella)
+- "CKD4 from diabetes" -> `ckd_stage_4` (exact) + `chronic_kidney_disease` (umbrella) + `diabetic_nephropathy` (exact) + `diabetes_mellitus` (exact)
+- "NSTEMI" -> `non_st_elevation_myocardial_infarction` (exact) + `acute_myocardial_infarction` (umbrella)
+- "IECOPD" -> `copd_infective_exacerbation` (exact) + `copd` (umbrella)
 
-**Entity Status**
-- `current`: Active/ongoing (default for present conditions)
-- `negated`: Explicitly denied/ruled out ("no", "denies", "excluded")
-- `hypothetical`: Uncertain/differential ("?", "query", "consider", "cannot exclude")
-- `planned_procedure`: Procedure scheduled or planned for future ("plan for endoscopy", "listed for CABG")
-- `historical_event`: Past discrete acute event or procedure ("previous MI", "CVA 2019")
-- `resolved_condition`: Past chronic condition no longer active ("T2DM now resolved")
-- `family`: Entity doesn't belong to patient. Family history, or where child's history is in parent's notes
-- `other`: Ambiguous, or doesn't fit above
+## Do NOT Extract (close but wrong, or inference)
+- "D-dimer elevated" cannot be used to infer PE (inference) -> OMIT
+- "BP is 80/30" cannot be used to infer hypotension (inference) -> OMIT
+- "on omeprazole" cannot be used to infer GORD from medication (inference) -> OMIT
+- "dyspepsia" is not exact entity match to gastritis or GORD (close but wrong) -> OMIT
+- "bilateral infiltrates" cannot be used to infer a diagnosis (inference) -> OMIT
+- "mobile with stick" is not exact match to `zimmer_or_walker_dependency` (close but wrong) -> OMIT
 
-**Boolean Flags**
-- `is_key_problem`: TRUE only if clearly contributing to current encounter
-- `is_comorbidity`: TRUE if chronic background condition (can overlap with is_key_problem)
-- `is_procedure`: TRUE if procedure (can overlap with is_key_problem)
-- `is_new_diagnosis`: TRUE only if EXPLICITLY stated as new/first diagnosis
+## Assertion/Subject/Relevance Edge Cases
+- Chronic conditions are `active` by default, but `historical` if explicitly resolved
+- Discrete events (MI, stroke, surgery) in past are `historical`
+- Advice on activity status:
+  - `active`: currently being managed
+  - `recent`: acute resolution, but current situation directly follows on from this entity (or part of same care episode)
+  - `historical`: happened in the past or resolved with clear disconnect to current situation
+- When activity unclear from context → ambiguous (do not guess)
 
-**Uniqueness**:
-- Same entity may appear multiple times if status differs.
-- Otherwise an entity of a given status can only appear once
-
-**Dates**:
-- UK format (6/8/12 = 6th August 2012).
-- Extract year/month only if explicitly stated.
-
-**Ambiguity**:
-- If entity is ambiguous or unclear, omit it! Precision is more important than recall.
+## Other Rules
+- `is_primary_entity`: TRUE only up to three chief complaints. When in doubt, FALSE.
+- `is_exact_or_umbrella_match`: TRUE if entity matches exactly or as umbrella term
+- UK date format (6/8/12 = 6th August 2012)
+- Same entity may appear multiple times only if status differs
 </rules>
 
 <example>
 <input>
-"72M admitted with acute confusion, pyrexia 38.9°C. Known CKD4 secondary to T2DM, kidney transplant 2019 functioning well. PMH: CVA 2017 with residual L hemiplegia, ?TIA last week awaiting MRI, childhood epilepsy (resolved), CABG 2015. Codeine and lactulose. On amlodipine. FHx: mother bowel Ca age 58. BP 92/58. Chest clear, no wheeze. CXR: bilateral infiltrates. Lactate 4.2. Urine dip+. Impression: urosepsis, ?AKI on CKD. Plan: OGD next week for ongoing epigastric discomfort. No chest pain, ECG non-ischaemic. Lives with wife, mobile with stick, smoker 20/day."
+"58M acute dyspnoea, ?PE. Severe tachypnoea - worsening, sats 88% RA. DKA on admission, now corrected. PMH: DVT 1/3/2020, T2DM. FHx: father MI age 52. On omeprazole. D-dimer 2400. No haemoptysis. Plan: OGD for ongoing dyspepsia."
 </input>
-
 <output>
 {
   "is_clinical_document": true,
-  "has_active_malignancy": false,
-  "extraction_notes": "EXTRACTED: 'CKD4 secondary to T2DM' yields chronic_kidney_disease + ckd_stage_4 + diabetic_nephropathy + type_2_diabetes_mellitus (+ diabetes_mellitus). Urosepsis also yields sepsis + urinary_tract_infection. | STATUSES: CVA is historical_event (discrete past event) but hemiplegia is current (ongoing residual deficit). Transplant is current (in situ, functioning). Epilepsy is resolved_condition (explicitly stated resolved). ?TIA and ?AKI are hypothetical (unconfirmed). OGD is planned_procedure (scheduled for future). Bowel Ca is family (FHx). | NOT EXTRACTED: 'bilateral infiltrates' = radiological finding, not diagnosis (could be infection, oedema, or other). 'Lactate 4.2' = lab value, would need explicit 'lactic acidosis' to extract. BP 92/58 implies hypotension, but is not explicit and should not be inferred from result. 'ECG non-ischaemic' supports chest_pain negation but is not itself an entity. 'mobile with stick' ≠ zimmer_or_walker_dependency (walking stick is different mobility aid). 'acute confusion' → confusion_or_disorientation, NOT delirium (would need explicit delirium diagnosis). Lactulose implies constipation, but not explicitly stated so not extracted. Amlodipine implies hypertension, but it is incorrect to infer this diagnosis. 'epigastric discomfort' not extracted as no exact entity match",
+  "extraction_reasoning": ""EXTRACTED: dyspnoea (exact), ?PE→pulmonary_embolism (hypothetical), tachypnoea (exact with characterisation), DKA→diabetic_ketoacidosis, DVT→deep_vein_thrombosis+venous_thromboembolism (umbrella), T2DM→type_2_diabetes_mellitus+diabetes_mellitus (umbrella), FHx MI→acute_myocardial_infarction, haemoptysis (negated), OGD→upper_gi_endoscopic_therapy. | STATUSES: Presenting=dyspnoea/?PE. DKA recent (corrected this admission). DVT historical (PMH 2020). T2DM active (chronic). | NOT EXTRACTED: sats 88%, D-dimer 2400 (values→no inference); omeprazole (medication); dyspepsia (no exact match)."",
+  "document_content": {
+    "doc_type": "Acute medical admission",
+    "doc_summary": "58M presenting with dyspnoea, possible PE. Recent DKA now resolved. Background DVT, T2DM. OGD planned.",
+    "has_active_malignancy": false
+  },
   "entities": [
     {
-      "entity": "confusion_or_disorientation",
-      "entity_name_source_text": "acute confusion",
-      "entity_status": "current",
-      "entity_status_source_text": "admitted with",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "dyspnoea",
+      "entity_source_text": "acute dyspnoea",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": true,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "active",
+      "status_source_text": ["acute"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
-      "entity": "pyrexia",
-      "entity_name_source_text": "pyrexia 38.9°C",
-      "entity_status": "current",
-      "entity_status_source_text": null,
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "pulmonary_embolism",
+      "entity_source_text": "?PE",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": true,
+      "assertion": "hypothetical",
+      "subject": "patient",
+      "relevance": "active",
+      "status_source_text": ["?"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
-      "entity": "chronic_kidney_disease",
-      "entity_name_source_text": "CKD4",
-      "entity_status": "current",
-      "entity_status_source_text": "Known",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": true,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "tachypnoea",
+      "entity_source_text": "Severe tachypnoea",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": true,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "active",
+      "status_source_text": [],
+      "characterisation": {
+        "summary": "severe, worsening",
+        "source_text": ["Severe", "worsening"]
+      },
+      "year": null,
+      "month": null
     },
     {
-      "entity": "ckd_stage_4",
-      "entity_name_source_text": "CKD4",
-      "entity_status": "current",
-      "entity_status_source_text": "Known",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": true,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "diabetic_ketoacidosis",
+      "entity_source_text": "DKA on admission",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "recent",
+      "status_source_text": ["on admission", "now corrected"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
-      "entity": "diabetic_nephropathy",
-      "entity_name_source_text": "CKD4 secondary to T2DM",
-      "entity_status": "current",
-      "entity_status_source_text": null,
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": true,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "deep_vein_thrombosis",
+      "entity_source_text": "DVT 1/3/2020",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "historical",
+      "status_source_text": ["PMH", "1/3/2020"],
+      "characterisation": null,
+      "year": 2020,
+      "month": 3
+    },
+    {
+      "entity": "venous_thromboembolism",
+      "entity_source_text": "DVT 1/3/2020",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "historical",
+      "status_source_text": ["PMH", "1/3/2020"],
+      "characterisation": null,
+      "year": 2020,
+      "month": 3
     },
     {
       "entity": "type_2_diabetes_mellitus",
-      "entity_name_source_text": "T2DM",
-      "entity_status": "current",
-      "entity_status_source_text": null,
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": true,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity_source_text": "T2DM",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "active",
+      "status_source_text": ["PMH"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
-      "entity": "transplanted_kidney",
-      "entity_name_source_text": "kidney transplant 2019",
-      "entity_status": "current",
-      "entity_status_source_text": "functioning well",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": true,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": 2019,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "diabetes_mellitus",
+      "entity_source_text": "T2DM",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "active",
+      "status_source_text": ["PMH"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
-      "entity": "ischaemic_stroke",
-      "entity_name_source_text": "CVA 2017",
-      "entity_status": "historical_event",
-      "entity_status_source_text": "PMH",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": 2017,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "acute_myocardial_infarction",
+      "entity_source_text": "MI age 52",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "family_history",
+      "relevance": "historical",
+      "status_source_text": ["FHx", "father"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
-      "entity": "hemiplegia",
-      "entity_name_source_text": "residual L hemiplegia",
-      "entity_status": "current",
-      "entity_status_source_text": "residual",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": true,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "transient_ischaemic_attack",
-      "entity_name_source_text": "TIA last week",
-      "entity_status": "hypothetical",
-      "entity_status_source_text": "?TIA",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "epilepsy",
-      "entity_name_source_text": "childhood epilepsy",
-      "entity_status": "resolved_condition",
-      "entity_status_source_text": "resolved",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "coronary_artery_bypass_graft",
-      "entity_name_source_text": "CABG 2015",
-      "entity_status": "historical_event",
-      "entity_status_source_text": "PMH",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": true,
-      "diagnosis_or_occurrence_year": 2015,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "primary_cancer_colorectal",
-      "entity_name_source_text": "bowel Ca",
-      "entity_status": "family",
-      "entity_status_source_text": "FHx: mother",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "urosepsis",
-      "entity_name_source_text": "urosepsis",
-      "entity_status": "current",
-      "entity_status_source_text": "Impression",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": true
-    },
-    {
-      "entity": "acute_kidney_injury",
-      "entity_name_source_text": "AKI on CKD",
-      "entity_status": "hypothetical",
-      "entity_status_source_text": "?AKI",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": true,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity": "haemoptysis",
+      "entity_source_text": "No haemoptysis",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "negated",
+      "subject": "patient",
+      "relevance": "active",
+      "status_source_text": ["No"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     },
     {
       "entity": "upper_gi_endoscopic_therapy",
-      "entity_name_source_text": "OGD next week",
-      "entity_status": "planned_procedure",
-      "entity_status_source_text": "Plan: OGD next week",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": true,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "chest_pain",
-      "entity_name_source_text": "chest pain",
-      "entity_status": "negated",
-      "entity_status_source_text": "No chest pain",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "wheezing",
-      "entity_name_source_text": "wheeze",
-      "entity_status": "negated",
-      "entity_status_source_text": "no wheeze",
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "living_with_others_at_home",
-      "entity_name_source_text": "Lives with wife",
-      "entity_status": "current",
-      "entity_status_source_text": null,
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
-    },
-    {
-      "entity": "active_smoker",
-      "entity_name_source_text": "smoker 20/day",
-      "entity_status": "current",
-      "entity_status_source_text": null,
-      "entity_severity_source_text": null,
-      "entity_progress_source_text": null,
-      "is_key_problem": false,
-      "is_comorbidity": false,
-      "is_procedure": false,
-      "diagnosis_or_occurrence_year": null,
-      "diagnosis_or_occurrence_month": null,
-      "is_new_diagnosis": false
+      "entity_source_text": "OGD",
+      "is_exact_or_umbrella_match": true,
+      "is_primary_entity": false,
+      "assertion": "positive",
+      "subject": "patient",
+      "relevance": "planned",
+      "status_source_text": ["Plan"],
+      "characterisation": null,
+      "year": null,
+      "month": null
     }
-  ],
-  "context_summary": {
-    "doc_context": "Acute medical admission clerking",
-    "doc_summary": "72M with acute confusion and pyrexia, working diagnosis urosepsis with possible AKI on background CKD4 (diabetic nephropathy, post-transplant). OGD planned for ongoing epigastric discomfort. Recent possible TIA under investigation. PMH includes CVA with residual hemiplegia, resolved childhood epilepsy, CABG."
-  }
+  ]
 }
 </output>
 </example>
 
-If document is non-clinical or not patient-specific, set `is_clinical_document: false` with null entities.
+**CRITICAL**: Never infer diagnoses from medications,  result, or numeric values unless the diagnosis is explicitly stated. Never fabricate entity values. If no exact match, omit. Precision is a medicolegal requirement.
 
-EDGE CASE: Look out for documents with mixed mother and baby history. Identify who the primary patient is, and mark status of the other as `family`.
+**EDGE CASE**: In mixed mother/baby documents, identify the primary patient and mark the other as `child_or_foetus` or appropriate subject.
 
-CRITICAL: If uncertain about entity match or status, DO NOT EXTRACT. **Never make or infer a diagnosis, especially not from medications or results**. **Never fabricate EntityType values**. **Only match where entities are an exact fit (or umbrella term)**. **Never match to "closest fit" when the exact term cannot be found**. Remember that precision is a vital medicolegal requirement!
-
-The document follows below:
+Please immediately classify whether this is a clinical document, then articulate your extraction strategy in `extraction_reasoning` before extracting entities. The document follows:

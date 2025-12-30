@@ -404,7 +404,6 @@ class EntityType(str, Enum):
     AORTIC_ANEURYSM = "aortic_aneurysm"
     AORTIC_ANEURYSM_RUPTURE = "aortic_aneurysm_rupture"
     HEREDITARY_HAEMORRHAGIC_TELANGIECTASIA = "hereditary_haemorrhagic_telangiectasia"
-    VENOUS_THROMBOEMBOLISM = "venous_thromboembolism"
     DEEP_VEIN_THROMBOSIS = "deep_vein_thrombosis"
     PERIPHERAL_VENOUS_INSUFFICIENCY = "peripheral_venous_insufficiency"
     LYMPHOEDEMA = "lymphoedema"
@@ -888,128 +887,103 @@ class EntityType(str, Enum):
     DISCHARGE_PENDING_PLACEMENT = "discharge_pending_placement"
     DISCHARGE_PENDING_TRANSFER = "discharge_pending_transfer"
 
+class EntityStatus(str, Enum):
+    """
+    Status of clinical entity relative to current encounter
+    """
 
-class Assertion(str, Enum):
-    """
-    Is the entity asserted as true?
-    """
-    POSITIVE = "positive"
-    # Entity is affirmed as present/true/occurred or has been clinically diagnosed
+    CURRENT = "current"
+    # Currently present, relevant, or ongoing.
+    # Use for: acute issues, active clinical findings, chronic conditions with on-going management, procedures in current episode.
+    # Default for any present condition or finding.
 
     NEGATED = "negated"
-    # Explicitly ruled out or denied (e.g., "no chest pain", "denies fever")
+    # Explicitly ruled out or denied.
+    # Use for: "no chest pain", "biopsy negative", "patient denies fever" etc
 
     HYPOTHETICAL = "hypothetical"
-    # Uncertain, queried, or differential (e.g., "?PE", "consider", "cannot exclude")
+    # Possible but unconfirmed diagnosis
+    # Use for: differential diagnoses, "?PE", "consider", "cannot exclude", "query", etc
 
-    AMBIGUOUS = "ambiguous"
-    # Truth status unclear from context - **use as escape valve if unsure!**
+    HISTORICAL_EVENT = "historical_event"
+    # Past occurrence of an acute event or procedure
+    # Use for: "previous MI", "history of stroke", "CABG 2015" etc.
+    # Applies to discrete occurrences.
 
+    PLANNED_PROCEDURE = "planned_procedure"
+    # Procedure scheduled or planned for future
+    # Use for: "plan for endoscopy", "listed for CABG", etc
 
-class Subject(str, Enum):
-    """
-    To whom does the entity apply?
-    """
-    PATIENT = "patient"
-    # Directly applies to the patient
+    RESOLVED_CONDITION = "resolved_condition"
+    # Resolved CHRONIC conditions that are no longer actively managed
+    # Use for: "previous T2DM now off treatment", "cancer in remission" etc.
 
-    FAMILY_HISTORY = "family_history"
-    # Pertains to a family member (e.g., "FHx breast cancer")
-
-    CHILD_OR_FOETUS = "child_or_foetus"
-    # Applies to child (e.g., in maternal/antenatal notes)
+    FAMILY = "family"
+    # Entity is in reference to a family member, not the patient
+    # Use for: family history, child assessment recorded in mother's notes
 
     OTHER = "other"
-    # Another individual (e.g., "donor HIV positive", "partner has chlamydia")
+    # Status unclear or doesn't fit above.
+    # Use for: scientific hypothetical discussions, where unclear
+    # Use this also as a release valve where context is ambiguous
 
-    AMBIGUOUS = "ambiguous"
-    # Subject unclear from context - **use as escape valve if unsure!**
-
-
-class Relevance(str, Enum):
-    """
-    When is the entity is actively relevant, relative to the current document?
-    """
-    ACTIVE = "active"
-    # Currently relevant as present, ongoing care, or under continued management
-    # (e.g. acute presentation being actively managed, active symptom or observation, on-going chronic conditon)
-
-    RECENT = "recent"
-    # No longer active but part of key series of events within, or related to this episode
-    # (e.g. "DKA on admission, now corrected", "presenting chest pain, now settled", "recent discharge for sepsis with MOF", "initial fever, now afebrile")
-
-    HISTORICAL = "historical"
-    # Occurred or resolved in the past, clear separation from current episode
-    # (e.g. "PMHx: MI 2019", "previous appendicectomy", "cancer in remission", "childhood asthma, no longer treated")
-
-    PLANNED = "planned"
-    # Scheduled or intended for future
-    # (e.g. "listed for CABG", "plan for endoscopy")
-
-    AMBIGUOUS = "ambiguous"
-    # Temporal relevance unclear from context - **use as escape valve if unsure!**
-
-class Characterisation(BaseModel):
-    summary: str = Field(
-        description="Normalised summary of severity, progress, or other qualifiers (e.g., 'stable and improving')"
-    )
-    source_text: List[str] = Field(
-        default_factory=list,
-        max_length=4,
-        description="1 to 4 short verbatim text snippets (each ≤6 words) that triggered characterisation. Leave empty if no relevant evidence"
-    )
 
 # MODELS
 
 class Entity(BaseModel):
-    entity: EntityType = Field(description="Entity type")
-    entity_source_text: str = Field(
-        description="Short verbatim text that triggered this entity"
+    entity: EntityType = Field(description="Entity")
+    entity_name_source_text: str = Field(
+        description="Verbatim text from document that maps to this entity"
     )
-    is_exact_or_umbrella_match: bool = Field(
-        description="True if matched entity is an exact or umbrella term for concept. When in doubt, False."
+    entity_status: EntityStatus = Field(description="Status of clinical entity")
+    entity_status_source_text: Optional[str] = Field(
+        None, description="Verbatim text from which entity status is derived"
     )
-    is_primary_entity: bool = Field(
-        description= "True ONLY for the 1-3 entities that are the primary reason for this encounter. This is the chief complaint or main diagnosis. When in doubt, mark False."
+    entity_severity_source_text: Optional[str] = Field(
+        None, description="Verbatim text describing severity or intensity (e.g., mild, moderate, severe)"
     )
-    assertion: Assertion = Field(description="Is the entity asserted as true?")
-    subject: Subject = Field(description="To whom does the entity apply?")
-    relevance: Relevance = Field(description="When is the entity relevant?")
-    status_source_text: List[str] = Field(
-        default_factory=list,
-        max_length=4,
-        description="1 to 4 short verbatim text snippets (each ≤6 words) that triggered assertion/subject/activity. Leave empty if no relevant evidence."
+    entity_progress_source_text: Optional[str] = Field(
+        None, description="Verbatim text describing change over time (e.g., worsening, improving, stable, unchanged)"
     )
-    characterisation: Optional[Characterisation] = Field(
-        None,
-        description="Severity, progress, or other clinical qualifiers"
+    is_key_problem: bool = Field(
+    description="TRUE if entity is of active relevance to current encounter (may overlap with other is_* fields)."
     )
-    year: Optional[Year] = Field(
-        None, description="Year of diagnosis or occurrence, only if explicitly stated"
+    is_comorbidity: bool = Field(
+        description="TRUE if entity is a chronic background condition (may overlap with is_key_problem)"
     )
-    month: Optional[Month] = Field(
-        None, description="Month of diagnosis or occurrence, only if explicitly stated"
+    is_procedure: bool = Field(
+        description="TRUE if entity is a procedure (may overlap with is_key_problem)"
+    )
+    diagnosis_or_occurrence_year: Optional[Year] = Field(
+        None, description="Year of diagnosis or occurrence. Only if explicitly stated."
+    )
+    diagnosis_or_occurrence_month: Optional[Month] = Field(
+        None, description="Month of diagnosis or occurrence. Only if explicitly stated."
+    )
+    is_new_diagnosis: bool = Field(
+        description="TRUE if explicit declaration that this is a new or first diagnosis"
     )
 
 
-class DocumentContent(BaseModel):
-    doc_type: str = Field(
-        description="Document type (e.g., discharge summary, clinic letter, not clinical)"
+class ContextSummary(BaseModel):
+    doc_context: str = Field(
+        description="Short description of document context (e.g. outpatient note, admission clerking, discharge summary, etc)"
     )
     doc_summary: str = Field(
-        description="Brief summary of document content preserving key concepts"
-    )
-    has_active_malignancy: bool = Field(
-        description="True if patient has active cancer documented"
+        description="Short summary of document content, with focus on active issues"
     )
 
 
 class EntitySchemaModel(BaseModel):
     is_clinical_document: bool = Field(
-        description="True if document contains patient clinical information"
+        description="TRUE if document contains patient clinical information"
     )
-    extraction_reasoning: str = Field(
-        description="In <100 words, think about your approach: (1) Plan exact/umbrella matching strategy; (2) Note any status ambiguities; (3) Flag edge cases. Prioritise precision over recall."
+    has_active_malignancy: bool = Field(
+        description="TRUE if patient has active cancer documented"
     )
-    document_content: DocumentContent
+    extraction_notes: Optional[str] = Field(
+    None,
+    description="Justification of difficult extraction choices, as well as notes on extraction difficulties, ambiguities, or edge cases encountered."
+    )
     entities: Optional[List[Entity]] = None
+    context_summary: Optional[ContextSummary] = None
