@@ -452,6 +452,7 @@ class EntityType(str, Enum):
     MALLORY_WEISS_TEAR = "mallory_weiss_tear"
     HIATUS_HERNIA = "hiatus_hernia"
     GASTRITIS_OR_DUODENITIS = "gastritis_or_duodenitis"
+    UPPER_GI_ULCER = "upper_gi_ulcer"
     GASTRIC_ULCER = "gastric_ulcer"
     DUODENAL_ULCER = "duodenal_ulcer"
     PERFORATED_UPPER_GI_ULCER = "perforated_upper_gi_ulcer"
@@ -686,7 +687,7 @@ class EntityType(str, Enum):
     CHEST_PAIN = "chest_pain"
     PLEURITIC_PAIN = "pleuritic_pain"
     ABDOMINAL_PAIN = "abdominal_pain"
-    ABDOMINAL_DISTENSION_OR_BLOATING = "abdominal_distention_or_bloating"
+    ABDOMINAL_DISTENSION_OR_BLOATING = "abdominal_distension_or_bloating"
     GUARDING_OR_PERITONISM = "guarding_or_peritonism"
     UPPER_ABDOMINAL_PAIN = "upper_abdominal_pain"
     LOWER_ABDOMINAL_PAIN = "lower_abdominal_pain"
@@ -846,7 +847,7 @@ class EntityType(str, Enum):
     MINIMALLY_INVASIVE_SURGERY = "minimally_invasive_surgery"
     UPPER_GI_ENDOSCOPIC_THERAPY = "upper_gi_endoscopic_therapy"
     LOWER_GI_ENDOSCOPIC_THERAPY = "lower_gi_endoscopic_therapy"
-    URETOSCOPIC_OR_CYSTOSCOPIC_THERAPY = "uretoscopic_or_cystoscopic_therapy"
+    URETEROSCOPIC_OR_CYSTOSCOPIC_THERAPY = "ureteroscopic_or_cystoscopic_therapy"
     BRONCHOSCOPIC_THERAPY = "bronchoscopic_therapy"
     PERCUTANEOUS_DRAIN = "percutaneous_drain"
     VASCULAR_INTERVENTIONAL_PROCEDURE = "vascular_interventional_procedure"
@@ -865,13 +866,13 @@ class EntityType(str, Enum):
     MAJOR_CARDIAC_SURGERY = "major_cardiac_surgery"
     MAJOR_ORTHOPAEDIC_SURGERY = "major_orthopaedic_surgery"
     MAJOR_UROLOGIC_SURGERY = "major_urologic_surgery"
-    MAJOR_GYNAECOLOGIC_SURGERY = "major_gynaecologic_surgery"
+    MAJOR_GYNAECOLOGICAL_SURGERY = "major_gynaecological_surgery"
     SURGICAL_OR_PROCEDURAL_COMPLICATION = "surgical_or_procedural_complication"
 
     # SOCIAL
     SOCIAL_CARE_PACKAGE = "social_care_package"
     RESIDENTIAL_OR_CARE_HOME = "residential_or_care_home"
-    TEMPORARY_ACCOMODATION = "temporary_accomodation"
+    TEMPORARY_ACCOMMODATION = "temporary_accommodation"
     NO_FIXED_ABODE = "no_fixed_abode"
     LIVING_ALONE_AT_HOME = "living_alone_at_home"
     LIVING_WITH_OTHERS_AT_HOME = "living_with_others_at_home"
@@ -916,8 +917,10 @@ class Subject(str, Enum):
     FAMILY_HISTORY = "family_history"
     # Pertains to a family member (e.g., "FHx breast cancer")
 
-    CHILD_OR_FOETUS = "child_or_foetus"
-    # Applies to child (e.g., in maternal/antenatal notes)
+    MOTHER_OR_CHILD_OR_FOETUS = "mother_or_child_or_foetus"
+    # Applies to mother or child referances in maternal/newborn notes
+    # If mother's note, then this is used for child/foetal concepts
+    # If child's note, then this is used for maternal references
 
     OTHER = "other"
     # Another individual (e.g., "donor HIV positive", "partner has chlamydia")
@@ -928,7 +931,7 @@ class Subject(str, Enum):
 
 class Relevance(str, Enum):
     """
-    When is the entity is actively relevant, relative to the current document?
+    When is the entity actively relevant, relative to the current document?
     """
     ACTIVE = "active"
     # Currently relevant as present, ongoing care, or under continued management
@@ -1009,7 +1012,7 @@ class EntitySchemaModel(BaseModel):
         description="True if document contains patient clinical information"
     )
     extraction_reasoning: str = Field(
-        description="In <100 words, think about your approach: (1) Plan exact/umbrella matching strategy; (2) Note any status ambiguities; (3) Flag edge cases. Prioritise precision over recall."
+        description="In <200 words, think about your approach: (1) Flag ambiguities and edge cases (2) Think through exact/umbrella matching strategy and note status ambiguities; (3) Confirm omissions, remembering that we must not infer, and must prioritise precision over recall."
     )
     document_content: DocumentContent
     entities: Optional[List[Entity]] = None
